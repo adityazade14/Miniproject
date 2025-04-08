@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Registration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-xl shadow-md max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-6 text-center">Student Registration</h1>
+    <form id="registerForm">
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" for="name">Full Name</label>
+        <input type="text" id="name" class="w-full border px-3 py-2 rounded" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" for="email">Email</label>
+        <input type="email" id="email" class="w-full border px-3 py-2 rounded" placeholder="student@uni.edu" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" for="password">Password</label>
+        <input type="password" id="password" class="w-full border px-3 py-2 rounded" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" for="department">Department ID</label>
+        <input type="number" id="department" class="w-full border px-3 py-2 rounded" required>
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm font-medium mb-1" for="semester">Semester</label>
+        <input type="number" id="semester" class="w-full border px-3 py-2 rounded" required>
+      </div>
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Register</button>
+    </form>
+    <p class="mt-4 text-center text-sm">
+      Already have an account? <a href="login.html" class="text-blue-600">Login here</a>.
+    </p>
+  </div>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const department_id = parseInt(document.getElementById('department').value);
+      const semester = parseInt(document.getElementById('semester').value);
+      try {
+        const response = await fetch('http://localhost:3000/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, department_id, semester })
+        });
+        if (response.ok) {
+          alert('Registration successful! You can now login.');
+          window.location.href = 'login.html';
+        } else {
+          const err = await response.json();
+          alert('Registration failed: ' + err.error);
+        }
+      } catch (error) {
+        console.error(error);
+        alert('An error occurred.');
+      }
+    });
+  </script>
+</body>
+</html>

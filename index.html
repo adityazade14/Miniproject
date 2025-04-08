@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Course Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .hidden { display: none; }
+    .active-tab { border-b-2:solid #3b82f6; font-weight: bold; }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Navigation Bar -->
+  <nav class="bg-white shadow-md">
+    <div class="container mx-auto px-4 py-4 flex flex-wrap gap-2">
+      <button class="tab-btn px-4 py-2 text-gray-700" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn px-4 py-2 text-gray-700" data-tab="courses">Courses</button>
+      <button class="tab-btn px-4 py-2 text-gray-700" data-tab="departments">Departments</button>
+      <button class="tab-btn px-4 py-2 text-gray-700" data-tab="enrollments">All Enrollments</button>
+      <!-- Role-specific tabs -->
+      <button id="studentPortalTab" class="tab-btn px-4 py-2 text-gray-700 hidden" data-tab="student-portal">My Enrollments</button>
+      <button id="adminPortalTab" class="tab-btn px-4 py-2 text-gray-700 hidden" data-tab="admin-portal">My Courses & Enrollments</button>
+      <button id="logoutBtn" class="ml-auto px-4 py-2 bg-red-500 text-white rounded">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-6">
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="tab-content">
+      <h1 class="text-3xl font-bold mb-4">Dashboard</h1>
+      <p>Welcome, <span id="userName"></span>! Use the navigation above to manage courses and view enrollments.</p>
+    </div>
+
+    <!-- Courses Section -->
+    <div id="courses" class="tab-content hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">Courses</h1>
+        <!-- Admin can add courses -->
+        <button id="addCourseBtn" class="bg-green-500 text-white px-4 py-2 rounded hidden">Add Course</button>
+      </div>
+      <table class="min-w-full bg-white shadow rounded-lg overflow-hidden">
+        <thead class="bg-blue-500 text-white">
+          <tr>
+            <th class="px-4 py-2">Course ID</th>
+            <th class="px-4 py-2">Course Name</th>
+            <th class="px-4 py-2">Credits</th>
+            <th class="px-4 py-2">Department</th>
+            <th class="px-4 py-2">Faculty</th>
+            <th class="px-4 py-2">Capacity</th>
+            <th class="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="coursesTable" class="text-gray-700">
+          <!-- Populated via fetch from backend -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Departments Section -->
+    <div id="departments" class="tab-content hidden">
+      <h1 class="text-3xl font-bold mb-4">Departments</h1>
+      <!-- For simplicity, you may load static department data or create an endpoint -->
+      <p>This section can be populated similarly.</p>
+    </div>
+
+    <!-- All Enrollments Section (For Admin reference) -->
+    <div id="enrollments" class="tab-content hidden">
+      <h1 class="text-3xl font-bold mb-4">All Enrollments</h1>
+      <table class="min-w-full bg-white shadow rounded-lg overflow-hidden">
+        <thead class="bg-yellow-500 text-white">
+          <tr>
+            <th class="px-4 py-2">Enrollment ID</th>
+            <th class="px-4 py-2">Student ID</th>
+            <th class="px-4 py-2">Course ID</th>
+            <th class="px-4 py-2">Semester</th>
+            <th class="px-4 py-2">Enrollment Date</th>
+          </tr>
+        </thead>
+        <tbody id="enrollmentsTable" class="text-gray-700">
+          <!-- Populated via fetch -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Student Portal (My Enrollments) -->
+    <div id="student-portal" class="tab-content hidden">
+      <h1 class="text-3xl font-bold mb-4">My Enrollments</h1>
+      <table class="min-w-full bg-white shadow rounded-lg overflow-hidden">
+        <thead class="bg-indigo-500 text-white">
+          <tr>
+            <th class="px-4 py-2">Enrollment ID</th>
+            <th class="px-4 py-2">Course Name</th>
+            <th class="px-4 py-2">Credits</th>
+            <th class="px-4 py-2">Department</th>
+            <th class="px-4 py-2">Enrollment Date</th>
+          </tr>
+        </thead>
+        <tbody id="studentPortalTable" class="text-gray-700">
+          <!-- Populated via fetch -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Admin Portal (My Courses & Enrollments) -->
+    <div id="admin-portal" class="tab-content hidden">
+      <h1 class="text-3xl font-bold mb-4">My Courses & Enrollments</h1>
+      <div id="adminPortalContent">
+        <!-- Populated via fetch -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Adding Course (Admin) -->
+  <div id="courseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg w-full max-w-lg">
+      <h2 class="text-xl font-bold mb-4">Add New Course</h2>
+      <form id="courseForm">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1" for="courseName">Course Name</label>
+          <input type="text" id="courseName" class="w-full border px-3 py-2 rounded" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1" for="courseCredits">Credits</label>
+          <input type="number" id="courseCredits" class="w-full border px-3 py-2 rounded" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1" for="courseDept">Department ID</label>
+          <input type="number" id="courseDept" class="w-full border px-3 py-2 rounded" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1" for="courseCapacity">Capacity</label>
+          <input type="number" id="courseCapacity" class="w-full border px-3 py-2 rounded" required>
+        </div>
+        <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Add Course</button>
+      </form>
+      <button id="closeModalBtn" class="mt-4 w-full bg-gray-300 text-gray-800 py-2 rounded hover:bg-gray-400">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    // Retrieve currentUser from sessionStorage
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!currentUser) { window.location.href = 'login.html'; }
+    document.getElementById('userName').textContent = currentUser.name;
+
+    // Show role-specific tabs/buttons
+    if (currentUser.type === 'student') {
+      document.getElementById('studentPortalTab').classList.remove('hidden');
+    }
+    if (currentUser.type === 'admin') {
+      document.getElementById('adminPortalTab').classList.remove('hidden');
+      document.getElementById('addCourseBtn').classList.remove('hidden');
+    }
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('currentUser');
+      window.location.href = 'login.html';
+    });
+
+    // Fetch and populate courses
+    async function populateCoursesTable() {
+      try {
+        const res = await fetch('http://localhost:3000/courses');
+        const courses = await res.json();
+        const table = document.getElementById('coursesTable');
+        table.innerHTML = "";
+        courses.forEach(course => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border px-4 py-2">${course.course_id}</td>
+            <td class="border px-4 py-2">${course.course_name}</td>
+            <td class="border px-4 py-2">${course.credits}</td>
+            <td class="border px-4 py-2">${course.department_id}</td>
+            <td class="border px-4 py-2">${course.faculty_id}</td>
+            <td class="border px-4 py-2">${course.capacity}</td>
+            <td class="border px-4 py-2">
+              ${currentUser.type === "student" ? `<button class="bg-blue-500 text-white px-2 py-1 rounded enroll-btn" data-id="${course.course_id}">Enroll</button>` : ""}
+            </td>
+          `;
+          table.appendChild(tr);
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Enroll in a course (student)
+    async function handleEnrollment(courseId) {
+      try {
+        const response = await fetch('http://localhost:3000/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_id: currentUser.student_id, course_id: courseId, semester: currentUser.semester })
+        });
+        if(response.ok) {
+          alert('Enrolled successfully!');
+          // Refresh tables as needed
+        } else {
+          const err = await response.json();
+          alert('Enrollment failed: ' + err.error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Add course (admin)
+    document.getElementById('courseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const course_name = document.getElementById('courseName').value;
+      const credits = parseInt(document.getElementById('courseCredits').value);
+      const department_id = parseInt(document.getElementById('courseDept').value);
+      const capacity = parseInt(document.getElementById('courseCapacity').value);
+      try {
+        const response = await fetch('http://localhost:3000/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ course_name, credits, department_id, faculty_id: currentUser.faculty_id, capacity })
+        });
+        if(response.ok) {
+          alert('Course added successfully!');
+          closeModal();
+          populateCoursesTable();
+        } else {
+          const err = await response.json();
+          alert('Failed to add course: ' + err.error);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    // Modal handling for adding course
+    const courseModal = document.getElementById("courseModal");
+    document.getElementById("addCourseBtn").addEventListener("click", () => {
+      courseModal.classList.remove("hidden");
+    });
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      courseModal.classList.add("hidden");
+    });
+
+    // Event delegation for enroll buttons
+    document.getElementById("coursesTable").addEventListener("click", (e) => {
+      if(e.target.classList.contains("enroll-btn")) {
+        const courseId = parseInt(e.target.getAttribute("data-id"));
+        handleEnrollment(courseId);
+      }
+    });
+
+    // Tab Navigation
+    function setupTabs() {
+      const tabs = document.querySelectorAll(".tab-btn");
+      const contents = document.querySelectorAll(".tab-content");
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          const target = tab.getAttribute("data-tab");
+          contents.forEach(content => content.classList.add("hidden"));
+          document.getElementById(target).classList.remove("hidden");
+          tabs.forEach(t => t.classList.remove("active-tab"));
+          tab.classList.add("active-tab");
+        });
+      });
+    }
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+      setupTabs();
+      populateCoursesTable();
+      // You can similarly fetch and populate enrollments and admin portal data.
+    });
+  </script>
+</body>
+</html>
